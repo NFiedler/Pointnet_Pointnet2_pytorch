@@ -17,7 +17,7 @@ import argparse
 
 from pathlib import Path
 from tqdm import tqdm
-from data_utils.ModelNetDataLoader import ModelNetDataLoader
+from data_utils.KinectDataLoader import KinectDataLoader
 
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 ROOT_DIR = BASE_DIR
@@ -116,15 +116,15 @@ def main(args):
 
     '''DATA LOADING'''
     log_string('Load dataset ...')
-    data_path = 'data/modelnet40_normal_resampled/'
+    data_path = '/homeL/5fiedler/data/t2_prep'
 
-    train_dataset = ModelNetDataLoader(root=data_path, args=args, split='train', process_data=args.process_data)
-    test_dataset = ModelNetDataLoader(root=data_path, args=args, split='test', process_data=args.process_data)
+    train_dataset = KinectDataLoader(root=data_path, split='train', process_data=args.process_data)
+    test_dataset = KinectDataLoader(root=data_path, split='test', process_data=args.process_data)
     trainDataLoader = torch.utils.data.DataLoader(train_dataset, batch_size=args.batch_size, shuffle=True, num_workers=10, drop_last=True)
     testDataLoader = torch.utils.data.DataLoader(test_dataset, batch_size=args.batch_size, shuffle=False, num_workers=10)
 
     '''MODEL LOADING'''
-    num_class = args.num_category
+    num_class = 2
     model = importlib.import_module(args.model)
     shutil.copy('./models/%s.py' % args.model, str(exp_dir))
     shutil.copy('models/pointnet2_utils.py', str(exp_dir))
@@ -174,15 +174,18 @@ def main(args):
         scheduler.step()
         for batch_id, (points, target) in tqdm(enumerate(trainDataLoader, 0), total=len(trainDataLoader), smoothing=0.9):
             optimizer.zero_grad()
-
+            print(target)
             points = points.data.numpy()
             points = provider.random_point_dropout(points)
             points[:, :, 0:3] = provider.random_scale_point_cloud(points[:, :, 0:3])
             points[:, :, 0:3] = provider.shift_point_cloud(points[:, :, 0:3])
             points = torch.Tensor(points)
+            #target = torch.Tensor(target)
             points = points.transpose(2, 1)
 
             if not args.use_cpu:
+                # points = points.cuda()
+                # target = target.cuda()
                 points, target = points.cuda(), target.cuda()
 
             pred, trans_feat = classifier(points)
