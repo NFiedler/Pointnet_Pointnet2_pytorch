@@ -116,10 +116,10 @@ def main(args):
 
     '''DATA LOADING'''
     log_string('Load dataset ...')
-    data_path = '/homeL/5fiedler/data/t2_prep'
+    data_path = '/homeL/5fiedler/data/t3_prep'
 
-    train_dataset = KinectDataLoader(root=data_path, split='train', process_data=args.process_data)
-    test_dataset = KinectDataLoader(root=data_path, split='test', process_data=args.process_data)
+    train_dataset = KinectDataLoader(root=data_path, split='train', include_normals=args.use_normals)
+    test_dataset = KinectDataLoader(root=data_path, split='test', include_normals=args.use_normals)
     trainDataLoader = torch.utils.data.DataLoader(train_dataset, batch_size=args.batch_size, shuffle=True, num_workers=10, drop_last=True)
     testDataLoader = torch.utils.data.DataLoader(test_dataset, batch_size=args.batch_size, shuffle=False, num_workers=10)
 
@@ -174,7 +174,6 @@ def main(args):
         scheduler.step()
         for batch_id, (points, target) in tqdm(enumerate(trainDataLoader, 0), total=len(trainDataLoader), smoothing=0.9):
             optimizer.zero_grad()
-            print(target)
             points = points.data.numpy()
             points = provider.random_point_dropout(points)
             points[:, :, 0:3] = provider.random_scale_point_cloud(points[:, :, 0:3])

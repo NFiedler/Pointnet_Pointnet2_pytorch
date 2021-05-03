@@ -43,8 +43,9 @@ def farthest_point_sample(point, npoint):
 
 
 class KinectDataLoader(Dataset):
-    def __init__(self, root, split='train', process_data=False):
+    def __init__(self, root, split='train', include_normals=False):
         self.root = root
+        self.include_normals = include_normals
         self.path = os.path.join(self.root, split)
         self.datapath = list()
         self.label = list()
@@ -59,7 +60,8 @@ class KinectDataLoader(Dataset):
         return len(self.datapath)
 
     def _get_item(self, index):
-        return np.load(os.path.join(self.path, os.path.basename(self.datapath[index])))['points'], int(self.label[index])
+        x = 6 if self.include_normals else 3
+        return np.load(os.path.join(self.path, os.path.basename(self.datapath[index])))['points'][:, :x], int(self.label[index])
 
     def __getitem__(self, index):
         return self._get_item(index)
