@@ -116,7 +116,7 @@ def main(args):
 
     '''DATA LOADING'''
     log_string('Load dataset ...')
-    data_path = '/homeL/5fiedler/data/t3_prep'
+    data_path = '/homeL/5fiedler/data/t3_t4_t5_prep'
 
     train_dataset = KinectDataLoader(root=data_path, split='train', include_normals=args.use_normals)
     test_dataset = KinectDataLoader(root=data_path, split='test', include_normals=args.use_normals)
