@@ -25,11 +25,11 @@ def parse_args():
     parser.add_argument('--gpu', type=str, default='0', help='specify gpu device')
     parser.add_argument('--batch_size', type=int, default=24, help='batch size in training')
     parser.add_argument('--num_category', default=2, type=int)
-    parser.add_argument('--num_point', type=int, default=1024, help='Point Number')
     parser.add_argument('--log_dir', type=str, required=True, help='Experiment root')
     parser.add_argument('--use_normals', action='store_true', default=False, help='use normals')
     parser.add_argument('--use_uniform_sample', action='store_true', default=False, help='use uniform sampiling')
     parser.add_argument('--num_votes', type=int, default=3, help='Aggregate classification scores with voting')
+    parser.add_argument('--data_path', type=str, required=True, help='Data root')
     return parser.parse_args()
 
 
@@ -65,8 +65,9 @@ def test(model, loader, num_class=40, vote_num=1):
     class_acc[:, 2] = class_acc[:, 0] / class_acc[:, 1]
     class_acc = np.mean(class_acc[:, 2])
     instance_acc = np.mean(mean_correct)
-    report = classification_report(targets, predictions, labels=(0, 1))
-    conf_matrix = confusion_matrix(targets, predictions, labels=(0, 1))
+    labels = list(range(args.num_category))
+    report = classification_report(targets, predictions, labels=labels)
+    conf_matrix = confusion_matrix(targets, predictions, labels=labels)
     print(report)
     print(conf_matrix)
     with open(args.log_dir + '_eval.txt', 'w') as f:
@@ -99,7 +100,7 @@ def main(args):
 
     '''DATA LOADING'''
     log_string('Load dataset ...')
-    data_path = '/homeL/5fiedler/data/t3_t4_t5_prep/'
+    data_path = args.data_path #'/homeL/5fiedler/data/t3_t4_t5_prep/'
 
     test_dataset = KinectDataLoader(root=data_path, split='test', include_normals=args.use_normals)
     testDataLoader = torch.utils.data.DataLoader(test_dataset, batch_size=args.batch_size, shuffle=False, num_workers=10)
