@@ -30,7 +30,6 @@ def parse_args():
     parser.add_argument('--gpu', type=str, default='0', help='specify gpu device')
     parser.add_argument('--batch_size', type=int, default=24, help='batch size in training')
     parser.add_argument('--model', default='pointnet_cls', help='model name [default: pointnet_cls]')
-    parser.add_argument('--num_category', default=40, type=int, choices=[10, 40],  help='training on ModelNet10/40')
     parser.add_argument('--epoch', default=200, type=int, help='number of epoch in training')
     parser.add_argument('--learning_rate', default=0.001, type=float, help='learning rate in training')
     parser.add_argument('--num_point', type=int, default=1024, help='Point Number')
@@ -40,6 +39,7 @@ def parse_args():
     parser.add_argument('--use_normals', action='store_true', default=False, help='use normals')
     parser.add_argument('--process_data', action='store_true', default=False, help='save data offline')
     parser.add_argument('--use_uniform_sample', action='store_true', default=False, help='use uniform sampiling')
+    parser.add_argument('--data_path', type=str, required=True, help='Data root')
     return parser.parse_args()
 
 
@@ -116,7 +116,7 @@ def main(args):
 
     '''DATA LOADING'''
     log_string('Load dataset ...')
-    data_path = '/homeL/5fiedler/data/t3_t4_t5_prep'
+    data_path = args.data_path #'/homeL/5fiedler/data/t3_t4_t5_prep/'
 
     train_dataset = KinectDataLoader(root=data_path, split='train', include_normals=args.use_normals)
     test_dataset = KinectDataLoader(root=data_path, split='test', include_normals=args.use_normals)
@@ -124,7 +124,9 @@ def main(args):
     testDataLoader = torch.utils.data.DataLoader(test_dataset, batch_size=args.batch_size, shuffle=False, num_workers=10)
 
     '''MODEL LOADING'''
-    num_class = 2
+    num_class = train_dataset.get_num_classes()
+    print('Classes:')
+    print(num_class)
     model = importlib.import_module(args.model)
     shutil.copy('./models/%s.py' % args.model, str(exp_dir))
     shutil.copy('models/pointnet2_utils.py', str(exp_dir))

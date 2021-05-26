@@ -59,6 +59,9 @@ class KinectDataLoader(Dataset):
     def __len__(self):
         return len(self.datapath)
 
+    def get_num_classes(self):
+        return len(set(self.label))
+
     def _get_item(self, index):
         x = 6 if self.include_normals else 3
         return np.load(os.path.join(self.path, os.path.basename(self.datapath[index])))['points'][:, :x], int(self.label[index])
