@@ -30,6 +30,8 @@ def parse_args():
     parser.add_argument('--use_uniform_sample', action='store_true', default=False, help='use uniform sampiling')
     parser.add_argument('--num_votes', type=int, default=3, help='Aggregate classification scores with voting')
     parser.add_argument('--data_path', type=str, required=True, help='Data root')
+    parser.add_argument('--tex_out', action='store_true', default=False, help='generate tex tables')
+    parser.add_argument('--class_names', type=str, default='', help='class names separated by commas, no spaces')
     return parser.parse_args()
 
 
@@ -70,6 +72,28 @@ def test(model, loader, num_class=40, vote_num=1):
     conf_matrix = confusion_matrix(targets, predictions, labels=labels)
     print(report)
     print(conf_matrix)
+    if args.tex_out:
+        class_names = args.class_names.split(',')
+        report_dict = classification_report(targets, predictions, labels=labels, output_dict=True)
+        acc_str = '''\\begin{table}[]
+		\\caption{}
+		\\label{tab:}
+		\\centering
+		\\begin{tabular}{l|r|r|r|r}
+			         & Precision & Recall & F1-score & Support \\\\ 
+			         <rows> \\hline\\hline
+			Accuracy &           &        &     <acc> &     <supp> \\\\ \\hline
+		\\end{tabular}
+	\\end{table}'''
+        rows = ''
+        for i, class_name in enumerate(class_names):
+            rows.append(f'\\hline\\\\\n{class_name} & {report_dict[str(i)]["precision"]} & {report_dict[str(i)]["recall"]} & {report_dict[str(i)]["f1-score"]} & {report_dict[str(i)]["support"]}')
+        acc_str.replace('<rows>', rows)
+        acc_str.replace('<acc>', report_dict['accuracy'])
+        acc_str.replace('<supp>', report_dict['macro avg']['support'])
+        with open(args.log_dir + '_eval.tex', 'w') as f:
+            f.write(acc_str)
+
     with open(args.log_dir + '_eval.txt', 'w') as f:
         f.writelines([str(report), ' ', str(conf_matrix), ''])
     return instance_acc, class_acc
@@ -106,7 +130,13 @@ def main(args):
     testDataLoader = torch.utils.data.DataLoader(test_dataset, batch_size=args.batch_size, shuffle=False, num_workers=10)
 
     '''MODEL LOADING'''
+    class_names = args.class_names.split(',')
     num_class = test_dataset.get_num_classes()
+    if args.tex_out:
+        if len(class_names) != num_class:
+            print('class names and class count mismatch!')
+            print(num_class)
+            print(class_names)
     model_name = os.listdir(experiment_dir + '/logs')[0].split('.')[0]
     model = importlib.import_module(model_name)
 
