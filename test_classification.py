@@ -24,6 +24,7 @@ def parse_args():
     parser.add_argument('--use_cpu', action='store_true', default=False, help='use cpu mode')
     parser.add_argument('--gpu', type=str, default='0', help='specify gpu device')
     parser.add_argument('--batch_size', type=int, default=24, help='batch size in training')
+    parser.add_argument('--num_points', type=int, default=1024, help='Point Number')
     parser.add_argument('--num_category', default=2, type=int)
     parser.add_argument('--log_dir', type=str, required=True, help='Experiment root')
     parser.add_argument('--use_normals', action='store_true', default=False, help='use normals')
@@ -144,7 +145,7 @@ def main(args):
     log_string('Load dataset ...')
     data_path = args.data_path #'/homeL/5fiedler/data/t3_t4_t5_prep/'
 
-    test_dataset = KinectDataLoader(root=data_path, split='test', include_normals=args.use_normals)
+    test_dataset = KinectDataLoader(root=data_path, split='test', include_normals=args.use_normals, num_points=args.num_points)
     testDataLoader = torch.utils.data.DataLoader(test_dataset, batch_size=args.batch_size, shuffle=False, num_workers=10)
 
     '''MODEL LOADING'''

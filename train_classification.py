@@ -32,7 +32,7 @@ def parse_args():
     parser.add_argument('--model', default='pointnet_cls', help='model name [default: pointnet_cls]')
     parser.add_argument('--epoch', default=200, type=int, help='number of epoch in training')
     parser.add_argument('--learning_rate', default=0.001, type=float, help='learning rate in training')
-    parser.add_argument('--num_point', type=int, default=1024, help='Point Number')
+    parser.add_argument('--num_points', type=int, default=1024, help='Point Number')
     parser.add_argument('--optimizer', type=str, default='Adam', help='optimizer for training')
     parser.add_argument('--log_dir', type=str, default=None, help='experiment root')
     parser.add_argument('--decay_rate', type=float, default=1e-4, help='decay rate')
@@ -118,8 +118,8 @@ def main(args):
     log_string('Load dataset ...')
     data_path = args.data_path #'/homeL/5fiedler/data/t3_t4_t5_prep/'
 
-    train_dataset = KinectDataLoader(root=data_path, split='train', include_normals=args.use_normals)
-    test_dataset = KinectDataLoader(root=data_path, split='test', include_normals=args.use_normals)
+    train_dataset = KinectDataLoader(root=data_path, split='train', include_normals=args.use_normals, num_points=args.num_points)
+    test_dataset = KinectDataLoader(root=data_path, split='test', include_normals=args.use_normals, num_points=args.num_points)
     trainDataLoader = torch.utils.data.DataLoader(train_dataset, batch_size=args.batch_size, shuffle=True, num_workers=10, drop_last=True)
     testDataLoader = torch.utils.data.DataLoader(test_dataset, batch_size=args.batch_size, shuffle=False, num_workers=10)
 
