@@ -70,6 +70,7 @@ def test(model, loader, num_class=40, vote_num=1):
     labels = list(range(args.num_category))
     report = classification_report(targets, predictions, labels=labels)
     conf_matrix = confusion_matrix(targets, predictions, labels=labels)
+    cm = confusion_matrix(targets, predictions, labels=labels, normalize='true')
     print(report)
     print(conf_matrix)
     if args.tex_out:
@@ -80,19 +81,36 @@ def test(model, loader, num_class=40, vote_num=1):
 		\\label{tab:}
 		\\centering
 		\\begin{tabular}{l|r|r|r|r}
-			         & Precision & Recall & F1-score & Support \\\\ 
-			         <rows> \\hline\\hline
+			         & Precision & Recall & F1-score & Support <rows> \\\\\\hline\\hline
 			Accuracy &           &        &     <acc> &     <supp> \\\\ \\hline
 		\\end{tabular}
 	\\end{table}'''
         rows = ''
         for i, class_name in enumerate(class_names):
-            rows.append(f'\\hline\\\\\n{class_name} & {report_dict[str(i)]["precision"]} & {report_dict[str(i)]["recall"]} & {report_dict[str(i)]["f1-score"]} & {report_dict[str(i)]["support"]}')
-        acc_str.replace('<rows>', rows)
-        acc_str.replace('<acc>', report_dict['accuracy'])
-        acc_str.replace('<supp>', report_dict['macro avg']['support'])
+            rows += f'\\\\\\hline\n{class_name} & {report_dict[str(i)]["precision"]:.3f} & {report_dict[str(i)]["recall"]:.3f} & {report_dict[str(i)]["f1-score"]:.3f} & {report_dict[str(i)]["support"]}'
+        acc_str = acc_str.replace('<rows>', rows)
+        acc_str = acc_str.replace('<acc>', str(round(report_dict['accuracy'], 3)))
+        acc_str = acc_str.replace('<supp>', str(round(report_dict['macro avg']['support'], 3)))
+
+        conf_mat_str = '''
+        \\begin{table}[t!]
+            \\caption{}
+            \\label{tab:}
+            \\renewcommand{\\arraystretch}{1.5}
+            \\setlength\\tabcolsep{0.08cm}
+            \\centering
+            \\begin{tabular}{|c|''' + "c|" * len(class_names) + '''}
+                \\cline{2-''' + str(len(class_names) + 1) + '''}
+                \\multicolumn{1}{c|}{} & \\rule{0pt}{17mm} <classes>\\\\\\hline
+                <class_scores>
+            \\end{tabular}
+        \\end{table}'''
+        classes_str = " & ".join(["\\rot{" + name + "}" for name in class_names])
+        class_scores = '\n'.join([name + " & " + " & ".join(['\cellcolor{blue!' + str(int(cm[i][j] * 100)) + '}{' + str(round(cm[i][j],3)) + '}' for j in range(len(class_names))]) + '\\\\\\hline' for i, name in enumerate(class_names)])
+        conf_mat_str = conf_mat_str.replace('<classes>', classes_str)
+        conf_mat_str = conf_mat_str.replace('<class_scores>', class_scores)
         with open(args.log_dir + '_eval.tex', 'w') as f:
-            f.write(acc_str)
+            f.write(acc_str + '\n\n\n' + conf_mat_str)
 
     with open(args.log_dir + '_eval.txt', 'w') as f:
         f.writelines([str(report), ' ', str(conf_matrix), ''])
