@@ -43,13 +43,15 @@ def farthest_point_sample(point, npoint):
 
 
 class KinectDataLoader(Dataset):
-    def __init__(self, root, split='train', include_normals=False, num_points=1024):
+    def __init__(self, root, split='train', include_normals=False, num_points=1024, center_pointclouds=False, random_scaling=False):
         self.root = root
         self.include_normals = include_normals
         self.path = os.path.join(self.root, split)
         self.num_points = num_points
         self.datapath = list()
         self.label = list()
+        self.centering = center_pointclouds
+        self.random_scaling = random_scaling
 
         with open(os.path.join(self.path, 'labels.txt')) as f:
             for line in f.readlines():
@@ -65,7 +67,13 @@ class KinectDataLoader(Dataset):
 
     def _get_item(self, index):
         x = 6 if self.include_normals else 3
-        return np.load(os.path.join(self.path, os.path.basename(self.datapath[index])))['points'][:self.num_points, :x], int(self.label[index])
+        a = np.load(os.path.join(self.path, os.path.basename(self.datapath[index])))['points'][:self.num_points, :x]
+        t = torch.tensor(a)
+        if self.centering:
+            t[:, :3] = (t[:, :3] - (t[:, :3].min(0)[0] + (t[:, :3].max(0)[0] - t[:, :3].min(0)[0]) / 2)) * (1 + (torch.rand(1) * .2 - .1))
+        if self.random_scaling:
+            t[:, :3] *= (1 + (torch.rand(1) * .2 - .1))
+        return t, int(self.label[index])
 
     def __getitem__(self, index):
         return self._get_item(index)
@@ -96,8 +104,9 @@ if __name__ == '__main__':
         parser.add_argument('--use_uniform_sample', action='store_true', default=False, help='use uniform sampiling')
         return parser.parse_args()
 
-    data = KinectDataLoader(sys.argv[1], split='train')
-    DataLoader = torch.utils.data.DataLoader(data, batch_size=12, shuffle=True)
+    data = KinectDataLoader(sys.argv[1], num_points=1, split='train', center_pointclouds=True, random_scaling=True, include_normals=True)
+    DataLoader = torch.utils.data.DataLoader(data, batch_size=2, shuffle=True)
     for point, label in DataLoader:
-        print(point.shape)
+        pass
+        print(point)
         print(label)

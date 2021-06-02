@@ -118,8 +118,8 @@ def main(args):
     log_string('Load dataset ...')
     data_path = args.data_path #'/homeL/5fiedler/data/t3_t4_t5_prep/'
 
-    train_dataset = KinectDataLoader(root=data_path, split='train', include_normals=args.use_normals, num_points=args.num_points)
-    test_dataset = KinectDataLoader(root=data_path, split='test', include_normals=args.use_normals, num_points=args.num_points)
+    train_dataset = KinectDataLoader(root=data_path, split='train', include_normals=args.use_normals, num_points=args.num_points, center_pointclouds=True, random_scaling=True)
+    test_dataset = KinectDataLoader(root=data_path, split='test', include_normals=args.use_normals, num_points=args.num_points, center_pointclouds=True, random_scaling=True)
     trainDataLoader = torch.utils.data.DataLoader(train_dataset, batch_size=args.batch_size, shuffle=True, num_workers=10, drop_last=True)
     testDataLoader = torch.utils.data.DataLoader(test_dataset, batch_size=args.batch_size, shuffle=False, num_workers=10)
 
@@ -178,7 +178,7 @@ def main(args):
             optimizer.zero_grad()
             points = points.data.numpy()
             points = provider.random_point_dropout(points)
-            points[:, :, 0:3] = provider.random_scale_point_cloud(points[:, :, 0:3])
+            #points[:, :, 0:3] = provider.random_scale_point_cloud(points[:, :, 0:3])
             points[:, :, 0:3] = provider.shift_point_cloud(points[:, :, 0:3])
             points = torch.Tensor(points)
             #target = torch.Tensor(target)

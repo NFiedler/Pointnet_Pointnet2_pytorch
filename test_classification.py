@@ -145,7 +145,7 @@ def main(args):
     log_string('Load dataset ...')
     data_path = args.data_path #'/homeL/5fiedler/data/t3_t4_t5_prep/'
 
-    test_dataset = KinectDataLoader(root=data_path, split='test', include_normals=args.use_normals, num_points=args.num_points)
+    test_dataset = KinectDataLoader(root=data_path, split='test', include_normals=args.use_normals, num_points=args.num_points, center_pointclouds=True, random_scaling=True)
     testDataLoader = torch.utils.data.DataLoader(test_dataset, batch_size=args.batch_size, shuffle=False, num_workers=10)
 
     '''MODEL LOADING'''

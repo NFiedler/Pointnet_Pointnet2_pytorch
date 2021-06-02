@@ -44,7 +44,7 @@ def shuffle_points(batch_data):
     return batch_data[:,idx,:]
 
 def rotate_point_cloud(batch_data):
-    """ Randomly rotate the point clouds to augument the dataset
+    """ Randomly rotate the point clouds to augment the dataset
         rotation is per shape based along up direction
         Input:
           BxNx3 array, original batch of point clouds
