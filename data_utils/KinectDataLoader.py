@@ -4,6 +4,7 @@ import os
 import numpy as np
 import warnings
 import pickle
+import torch
 
 from tqdm import tqdm
 from torch.utils.data import Dataset
