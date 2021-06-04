@@ -84,6 +84,8 @@ def test(model, loader, num_class=40, vote_num=1):
 		\\begin{tabular}{l|r|r|r|r}
 			         & Precision & Recall & F1-score & Support <rows> \\\\\\hline\\hline
 			Accuracy &           &        &     <acc> &     <supp> \\\\ \\hline
+			Average & <avg_precision> & <avg_recall> & <avg_fscore> &     <supp> \\\\ \\hline
+			Weighted Average & <wavg_precision> & <wavg_recall> & <wavg_fscore> &     <supp> \\\\ \\hline
 		\\end{tabular}
 	\\end{table}'''
         rows = ''
@@ -92,6 +94,12 @@ def test(model, loader, num_class=40, vote_num=1):
         acc_str = acc_str.replace('<rows>', rows)
         acc_str = acc_str.replace('<acc>', str(round(report_dict['accuracy'], 3)))
         acc_str = acc_str.replace('<supp>', str(round(report_dict['macro avg']['support'], 3)))
+        acc_str = acc_str.replace('<avg_precision>', str(round(report_dict['macro avg']['precision'], 3)))
+        acc_str = acc_str.replace('<avg_recall>', str(round(report_dict['macro avg']['recall'], 3)))
+        acc_str = acc_str.replace('<avg_fscore>', str(round(report_dict['macro avg']['f1-score'], 3)))
+        acc_str = acc_str.replace('<wavg_precision>', str(round(report_dict['weighted avg']['precision'], 3)))
+        acc_str = acc_str.replace('<wavg_recall>', str(round(report_dict['weighted avg']['recall'], 3)))
+        acc_str = acc_str.replace('<wavg_fscore>', str(round(report_dict['weighted avg']['f1-score'], 3)))
 
         conf_mat_str = '''
         \\begin{table}[t!]
