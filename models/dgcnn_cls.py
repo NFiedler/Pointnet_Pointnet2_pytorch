@@ -61,12 +61,13 @@ def get_graph_feature(x, k=20, idx=None, dim9=False):
 
     return feature      # (batch_size, 2*num_dims, num_points, k)
 
-class DGCNN_cls(nn.Module):
-    def __init__(self, args, output_channels=40):
-        super(DGCNN_cls, self).__init__()
-        self.args = args
-        self.k = args.k
-        print('init DGCNN')
+class get_model(nn.Module):
+    def __init__(self, num_class, k=20, dropout=0.5, emb_dims=1024, normal_channel=False):
+        super(get_model, self).__init__()
+        self.k = k
+        self.dropout = dropout
+        self.emb_dims = emb_dims
+        print('init dgcnn')
         self.bn1 = nn.BatchNorm2d(64)
         self.bn2 = nn.BatchNorm2d(64)
         self.bn3 = nn.BatchNorm2d(128)
