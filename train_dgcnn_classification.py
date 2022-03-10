@@ -130,6 +130,14 @@ class Trainer:
         print(str)
 
     def train(self, batch_size=None, num_points=None, k=20, dropout=0.5, emb_dims=1024):
+    def train(self, batch_size=None, num_points=None, learning_rate=None, k=20, dropout=0.5, emb_dims=1024, model=None):
+
+        if not batch_size:
+            batch_size = self.args.batch_size
+        if not num_points:
+            num_points = self.args.num_points
+        if not learning_rate:
+            learning_rate = self.args.learning_rate
 
         self.load_data(batch_size=batch_size, num_points=num_points)
 
@@ -162,7 +170,7 @@ class Trainer:
         if self.args.optimizer == 'Adam':
             optimizer = torch.optim.Adam(
                 classifier.parameters(),
-                lr=self.args.learning_rate,
+                lr=learning_rate,
                 betas=(0.9, 0.999),
                 eps=1e-08,
                 weight_decay=self.args.decay_rate
@@ -213,7 +221,7 @@ class Trainer:
             self.log_string('Train Instance Accuracy: %f' % train_instance_acc)
 
             with torch.no_grad():
-                instance_acc, class_acc = self.test(classifier.eval(), self.testDataLoader, num_class=num_class)
+                instance_acc, class_acc = self.test(classifier.eval(), num_class=num_class)
 
                 if (instance_acc >= best_instance_acc):
                     best_instance_acc = instance_acc
@@ -243,3 +251,4 @@ class Trainer:
 
 if __name__ == '__main__':
     t = Trainer()
+    t.train()
