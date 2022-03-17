@@ -98,7 +98,8 @@ class Trainer:
         class_acc = np.zeros((num_class, 3))
         classifier = model.eval()
 
-        for j, (points, target) in tqdm(enumerate(self.testDataLoader), total=len(self.testDataLoader)):
+        # for j, (points, target) in tqdm(enumerate(self.testDataLoader), total=len(self.testDataLoader)):
+        for j, (points, target) in enumerate(self.testDataLoader):
 
             if not self.args.use_cpu:
                 points, target = points.cuda(), target.cuda()
@@ -126,6 +127,7 @@ class Trainer:
             self.logger.info(str)
             print(str)
 
+    def train(self, batch_size, num_points, learning_rate, k, dropout, emb_dims, modelname, use_normals, decay_rate, sched_step_size, sched_gamma, trial=None):
 
         self.load_data(batch_size=batch_size, num_points=num_points)
         num_class = self.train_dataset.get_num_classes()
@@ -134,12 +136,12 @@ class Trainer:
             self.log_string(num_class)
 
         '''MODEL LOADING'''
-        model = importlib.import_module(self.args.model)
-        shutil.copy('./models/%s.py' % self.args.model, str(self.exp_dir))
+        model = importlib.import_module(modelname)
+        shutil.copy('./models/%s.py' % modelname, str(self.exp_dir))
         shutil.copy('models/pointnet2_utils.py', str(self.exp_dir))
         shutil.copy('./train_dgcnn_classification.py', str(self.exp_dir))
 
-        classifier = model.get_model(num_class, normal_channel=self.args.use_normals)
+        classifier = model.get_model(num_class=num_class, k=k, dropout=dropout, emb_dims=emb_dims, normal_channel=use_normals)
         criterion = model.get_loss()
         classifier.apply(self.inplace_relu)
 
@@ -164,12 +166,12 @@ class Trainer:
                 lr=learning_rate,
                 betas=(0.9, 0.999),
                 eps=1e-08,
-                weight_decay=self.args.decay_rate
+                weight_decay=decay_rate
             )
         else:
             optimizer = torch.optim.SGD(classifier.parameters(), lr=0.01, momentum=0.9)
 
-        scheduler = torch.optim.lr_scheduler.StepLR(optimizer, step_size=20, gamma=0.7)
+        scheduler = torch.optim.lr_scheduler.StepLR(optimizer, step_size=sched_step_size, gamma=sched_gamma)
         global_epoch = 0
         global_step = 0
         best_instance_acc = 0.0
@@ -184,7 +186,8 @@ class Trainer:
             mean_correct = []
             classifier = classifier.train()
 
-            for batch_id, (points, target) in tqdm(enumerate(self.trainDataLoader, 0), total=len(self.trainDataLoader), smoothing=0.9):
+            # for batch_id, (points, target) in tqdm(enumerate(self.trainDataLoader, 0), total=len(self.trainDataLoader), smoothing=0.9):
+            for batch_id, (points, target) in enumerate(self.trainDataLoader, 0):
                 optimizer.zero_grad()
                 points = points.data.numpy()
                 points = provider.random_point_dropout(points)
