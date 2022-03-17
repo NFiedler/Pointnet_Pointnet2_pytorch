@@ -127,6 +127,32 @@ class Trainer:
             self.logger.info(str)
             print(str)
 
+    def train_param(self):
+        self.train(self.args.batch_size, self.args.num_points, self.args.learning_rate, self.args.k, self.args.dropout, self.args.emb_dims, self.args.model, self.args.use_normals, self.args.decay_rate, 20, 0.7)
+
+    def train_pointnet_optuna(self, trial):
+        self.out = False
+        num_points = trial.suggest_categorical('num_points', [256, 512, 1024, 2048, 4096])
+        learning_rate = trial.suggest_loguniform('learning_rate', 1e-6, 1e-2)
+        dropout = trial.suggest_float('dropout', 0, 0.5, step=0.1)
+        decay_rate = trial.suggest_loguniform('decay_rate', 1e-6, 1e-2)
+        emb_dims = trial.suggest_int('emb_dims', 512, 2048)
+        sched_step_size = trial.suggest_int('sched_step_size', 5, 50)
+        sched_gamma = trial.suggest_float('sched_gamma', 0, 1.0 , step=0.05)
+        return self.train(self.args.batch_size, num_points, learning_rate, 5, dropout, emb_dims, 'pointnet_cls', self.args.use_normals, decay_rate, sched_step_size, sched_gamma, trial=trial)
+
+    def train_dgcnn_optuna(self, trial):
+        self.out = False
+        num_points = trial.suggest_categorical('num_points', [256, 512, 1024, 2048, 4096])
+        learning_rate = trial.suggest_loguniform('learning_rate', 1e-6, 1e-2)
+        k = trial.suggest_int('k', 5, 50)
+        dropout = trial.suggest_float('dropout', 0, 0.5, step=0.1)
+        decay_rate = trial.suggest_loguniform('decay_rate', 1e-6, 1e-2)
+        emb_dims = trial.suggest_int('emb_dims', 512, 2048)
+        sched_step_size = trial.suggest_int('sched_step_size', 5, 50)
+        sched_gamma = trial.suggest_float('sched_gamma', 0, 1.0 , step=0.05)
+        return self.train(self.args.batch_size, num_points, learning_rate, k, dropout, emb_dims, 'dgcnn_cls', self.args.use_normals, decay_rate, sched_step_size, sched_gamma, trial=trial)
+
     def train(self, batch_size, num_points, learning_rate, k, dropout, emb_dims, modelname, use_normals, decay_rate, sched_step_size, sched_gamma, trial=None):
 
         self.load_data(batch_size=batch_size, num_points=num_points)
