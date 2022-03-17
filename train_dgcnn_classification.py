@@ -184,7 +184,6 @@ class Trainer:
             mean_correct = []
             classifier = classifier.train()
 
-            scheduler.step()
             for batch_id, (points, target) in tqdm(enumerate(self.trainDataLoader, 0), total=len(self.trainDataLoader), smoothing=0.9):
                 optimizer.zero_grad()
                 points = points.data.numpy()
@@ -241,6 +240,7 @@ class Trainer:
                     }
                     torch.save(state, savepath)
                 global_epoch += 1
+            scheduler.step()
         if self.out:
             self.log_string('End of training...')
 
