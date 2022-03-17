@@ -272,6 +272,11 @@ class Trainer:
                     }
                     torch.save(state, savepath)
                 global_epoch += 1
+            if trial:
+                trial.report(best_class_acc, epoch)
+                # Handle pruning based on the intermediate value.
+                if trial.should_prune():
+                    raise optuna.exceptions.TrialPruned()
             scheduler.step()
         if self.out:
             self.log_string('End of training...')
