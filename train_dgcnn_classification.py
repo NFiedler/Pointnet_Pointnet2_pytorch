@@ -277,4 +277,40 @@ class Trainer:
 
 if __name__ == '__main__':
     t = Trainer()
-    t.train()
+    o = True
+    if o:
+        # with optuna
+        import optuna
+        # study = optuna.create_study(direction='maximize')
+        study.optimize(t.train_dgcnn_optuna, timeout=24*60*60)
+        pruned_trials = study.get_trials(deepcopy=False, states=[optuna.trial.TrialState.PRUNED])
+        complete_trials = study.get_trials(deepcopy=False, states=[optuna.trial.TrialState.COMPLETE])
+
+        print("Study statistics: ")
+        print("  Number of finished trials: ", len(study.trials))
+        print("  Number of pruned trials: ", len(pruned_trials))
+        print("  Number of complete trials: ", len(complete_trials))
+
+        print("Best trial:")
+        trial = study.best_trial
+
+        print("  Value: ", trial.value)
+
+        print("  Params: ")
+        for key, value in trial.params.items():
+            print("    {}: {}".format(key, value))
+
+        result = study.trials_dataframe()
+        fig = optuna.visualization.plot_param_importances(study)
+        os.makedirs('results/images', exist_ok=True)
+        fig.write_image("results/images/importance.png")
+        fig = optuna.visualization.plot_optimization_history(study)
+        fig.write_image("results/images/history.png")
+
+
+        # result.to_pickle("results/results.pkl")
+        # result.to_csv("results/results.csv")
+
+    else:
+        # without optuna
+        t.train_param()
