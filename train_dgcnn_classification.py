@@ -272,6 +272,7 @@ class Trainer:
             scheduler.step()
         if self.out:
             self.log_string('End of training...')
+        return best_class_acc
 
 
 if __name__ == '__main__':
