@@ -1,8 +1,3 @@
-"""
-Author: Benny
-Date: Nov 2019
-"""
-
 import os
 import sys
 import torch
@@ -31,6 +26,7 @@ class Trainer:
 
         '''HYPER PARAMETER'''
         os.environ["CUDA_VISIBLE_DEVICES"] = self.args.gpu
+        self.out = True
 
         '''CREATE DIR'''
         timestr = str(datetime.datetime.now().strftime('%Y-%m-%d_%H-%M'))
@@ -126,25 +122,18 @@ class Trainer:
         return instance_acc, class_acc
 
     def log_string(self, str):
-        self.logger.info(str)
-        print(str)
+        if self.out:
+            self.logger.info(str)
+            print(str)
 
-    def train(self, batch_size=None, num_points=None, k=20, dropout=0.5, emb_dims=1024):
-    def train(self, batch_size=None, num_points=None, learning_rate=None, k=20, dropout=0.5, emb_dims=1024, model=None):
-
-        if not batch_size:
-            batch_size = self.args.batch_size
-        if not num_points:
-            num_points = self.args.num_points
-        if not learning_rate:
-            learning_rate = self.args.learning_rate
 
         self.load_data(batch_size=batch_size, num_points=num_points)
+        num_class = self.train_dataset.get_num_classes()
+        if self.out:
+            self.log_string('Classes:')
+            self.log_string(num_class)
 
         '''MODEL LOADING'''
-        num_class = self.train_dataset.get_num_classes()
-        self.log_string('Classes:')
-        self.log_string(num_class)
         model = importlib.import_module(self.args.model)
         shutil.copy('./models/%s.py' % self.args.model, str(self.exp_dir))
         shutil.copy('models/pointnet2_utils.py', str(self.exp_dir))
@@ -162,9 +151,11 @@ class Trainer:
             checkpoint = torch.load(str(self.exp_dir) + '/checkpoints/best_model.pth')
             start_epoch = checkpoint['epoch']
             classifier.load_state_dict(checkpoint['model_state_dict'])
-            self.log_string('Use pretrain model')
+            if self.out:
+                self.log_string('Use pretrain model')
         except:
-            self.log_string('No existing model, starting training from scratch...')
+            if self.out:
+                self.log_string('No existing model, starting training from scratch...')
             start_epoch = 0
 
         if self.args.optimizer == 'Adam':
@@ -185,9 +176,11 @@ class Trainer:
         best_class_acc = 0.0
 
         '''TRANING'''
-        self.logger.info('Start training...')
+        if self.out:
+            self.logger.info('Start training...')
         for epoch in range(start_epoch, self.args.epoch):
-            self.log_string('Epoch %d (%d/%s):' % (global_epoch + 1, epoch + 1, self.args.epoch))
+            if self.out:
+                self.log_string('Epoch %d (%d/%s):' % (global_epoch + 1, epoch + 1, self.args.epoch))
             mean_correct = []
             classifier = classifier.train()
 
@@ -218,7 +211,8 @@ class Trainer:
                 global_step += 1
 
             train_instance_acc = np.mean(mean_correct)
-            self.log_string('Train Instance Accuracy: %f' % train_instance_acc)
+            if self.out:
+                self.log_string('Train Instance Accuracy: %f' % train_instance_acc)
 
             with torch.no_grad():
                 instance_acc, class_acc = self.test(classifier.eval(), num_class=num_class)
@@ -229,13 +223,15 @@ class Trainer:
 
                 if (class_acc >= best_class_acc):
                     best_class_acc = class_acc
-                self.log_string('Test Instance Accuracy: %f, Class Accuracy: %f' % (instance_acc, class_acc))
-                self.log_string('Best Instance Accuracy: %f, Class Accuracy: %f' % (best_instance_acc, best_class_acc))
+                if self.out:
+                    self.log_string('Test Instance Accuracy: %f, Class Accuracy: %f' % (instance_acc, class_acc))
+                    self.log_string('Best Instance Accuracy: %f, Class Accuracy: %f' % (best_instance_acc, best_class_acc))
 
                 if (instance_acc >= best_instance_acc):
-                    self.logger.info('Save model...')
                     savepath = str(self.checkpoints_dir) + '/best_model.pth'
-                    self.log_string('Saving at %s' % savepath)
+                    if self.out:
+                            self.logger.info('Save model...')
+                            self.log_string('Saving at %s' % savepath)
                     state = {
                         'epoch': best_epoch,
                         'instance_acc': instance_acc,
@@ -245,8 +241,8 @@ class Trainer:
                     }
                     torch.save(state, savepath)
                 global_epoch += 1
-
-        self.log_string('End of training...')
+        if self.out:
+            self.log_string('End of training...')
 
 
 if __name__ == '__main__':
