@@ -18,7 +18,6 @@ import matplotlib.pyplot as plt
 from typing import Tuple, Dict, List, Union, Iterable, Optional
 from tqdm import tqdm
 from torch.utils.data import Dataset
-from functools import cache
 from collections import defaultdict
 from enum import Enum
 
@@ -66,25 +65,33 @@ class MultiClothesDataLoader(Dataset):
 
     def __init__(self,
                  root: str,
-                 samples: Tuple,
-                 num_points: int = 0,
-                 areas: Tuple[typing.Union[int, str]] = (1, 2, 3),
+                 samples: Tuple[Union[int, str]],
+                 areas: Tuple[Union[int, str]] = (1, 2, 3),
                  modalities: Union[Tuple[Modalities], List[Modalities]] = (Modalities.RGB, Modalities.POINT_CLOUD),
                  sample_mappings: Optional[Dict[Union[int, str], int]] = None,
                  class_mappings: Optional[Dict[Union[int, str], int]] = None,
-                 point_cloud_centered = False,
-                 point_cloud_numpy = True,
-                 point_cloud_numpy_color = False,
-                 random_scaling=False):
+                 point_cloud_centered: bool = False,
+                 point_cloud_num_points: Optional[int] = None,
+                 point_cloud_numpy: bool = True,
+                 point_cloud_numpy_color: bool = False,
+                 point_cloud_random_scaling: bool = False,
+                 rgb_crop: Optional[Tuple[int]] = None,
+                 rgb_depth_mask: Optional[Tuple[int, int]] = None,
+                 depth_crop: Optional[Tuple[int]] = None,
+                 ):
         self.root = root
         self.samples = samples
-        self.num_points = num_points
         self.modalities = modalities
         self.sample_mappings = sample_mappings
         self.class_mappings = class_mappings
+        self.point_cloud_centered = point_cloud_centered
+        self.point_cloud_num_points = point_cloud_num_points
         self.point_cloud_numpy = point_cloud_numpy
         self.point_cloud_numpy_color = point_cloud_numpy_color
-        self.random_scaling = random_scaling
+        self.point_cloud_random_scaling = point_cloud_random_scaling
+        self.rgb_crop = rgb_crop
+        self.rgb_depth_mask = rgb_depth_mask
+        self.depth_crop = depth_crop
         self.all_classes = list()
 
         self.modality_keys = {
