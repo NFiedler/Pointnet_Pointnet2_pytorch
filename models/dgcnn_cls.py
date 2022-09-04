@@ -23,6 +23,8 @@ import torch.nn as nn
 import torch.nn.init as init
 import torch.nn.functional as F
 
+from typing import Dict
+
 
 def knn(x, k):
     inner = -2*torch.matmul(x.transpose(2, 1), x)
@@ -61,9 +63,14 @@ def get_graph_feature(x, k=20, idx=None, dim9=False):
 
     return feature      # (batch_size, 2*num_dims, num_points, k)
 
-class get_model(nn.Module):
-    def __init__(self, num_class, k=20, dropout=0.5, emb_dims=1024, normal_channel=False):
-        super(get_model, self).__init__()
+
+def get_model(num_class: int, config_dict: Dict):
+    return DGCNN(num_class, config_dict['dgcnn_k'], config_dict['dropout'], config_dict['emb_dims'], config_dict['use_colors'])
+
+
+class DGCNN(nn.Module):
+    def __init__(self, num_class: int, k: int = 20, dropout: float = 0.5, emb_dims: int = 1024, normal_channel: bool = False):
+        super(DGCNN, self).__init__()
         self.k = k
         self.dropout = dropout
         self.emb_dims = emb_dims

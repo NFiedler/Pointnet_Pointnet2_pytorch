@@ -201,7 +201,7 @@ class Trainer:
         shutil.copy('models/pointnet2_utils.py', str(self.exp_dir))
         shutil.copy('./train_dgcnn_classification.py', str(self.exp_dir))
 
-        classifier = model.get_model(num_class=num_class, k=k, dropout=dropout, emb_dims=emb_dims, normal_channel=use_color)
+        classifier = model.get_model(num_class=num_class, config_dict=self.config_dict)
         criterion = model.get_loss()
         classifier.apply(self.inplace_relu)
 

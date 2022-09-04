@@ -3,9 +3,16 @@ import torch.utils.data
 import torch.nn.functional as F
 from pointnet_utils import PointNetEncoder, feature_transform_reguliarzer
 
-class get_model(nn.Module):
-    def __init__(self, num_class, k=40, dropout=0.4, emb_dims=1024, normal_channel=False):
-        super(get_model, self).__init__()
+from typing import Dict
+
+
+def get_model(num_class: int, config_dict: Dict):
+    return PointNet(num_class, config_dict['dropout'], config_dict['emb_dims'], config_dict['use_colors'])
+
+
+class PointNet(nn.Module):
+    def __init__(self, num_class, dropout: float = 0.4, emb_dims: int = 1024, normal_channel: bool = False):
+        super(PointNet, self).__init__()
         if normal_channel:
             channel = 6
         else:
