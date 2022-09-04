@@ -24,6 +24,8 @@ import torch.nn.init as init
 import torch.nn.functional as F
 
 from typing import Dict
+from data_utils.MultiClothesDataLoader import MultiClothesDataLoader
+import provider
 
 
 def knn(x, k):
@@ -65,15 +67,16 @@ def get_graph_feature(x, k=20, idx=None, dim9=False):
 
 
 def get_model(num_class: int, config_dict: Dict):
-    return DGCNN(num_class, config_dict['dgcnn_k'], config_dict['dropout'], config_dict['emb_dims'], config_dict['use_colors'])
+    return DGCNN(num_class, config_dict['dgcnn_k'], config_dict['dropout'], config_dict['emb_dims'], config_dict['use_colors'], config_dict['use_cpu'])
 
 
 class DGCNN(nn.Module):
-    def __init__(self, num_class: int, k: int = 20, dropout: float = 0.5, emb_dims: int = 1024, normal_channel: bool = False):
+    def __init__(self, num_class: int, k: int = 20, dropout: float = 0.5, emb_dims: int = 1024, normal_channel: bool = False, use_cpu: bool = True):
         super(DGCNN, self).__init__()
         self.k = k
         self.dropout = dropout
         self.emb_dims = emb_dims
+        self.use_cpu = use_cpu
         print('init dgcnn')
         self.bn1 = nn.BatchNorm2d(64)
         self.bn2 = nn.BatchNorm2d(64)
@@ -105,6 +108,15 @@ class DGCNN(nn.Module):
         self.linear3 = nn.Linear(256, num_class)
 
     def forward(self, x):
+        x = x[MultiClothesDataLoader.Modalities.POINT_CLOUD]
+        # points = provider.random_point_dropout(points)
+        x[:, :, 0:3] = provider.random_scale_point_cloud(x[:, :, 0:3])
+        x[:, :, 0:3] = provider.shift_point_cloud(x[:, :, 0:3])
+
+        x = x.transpose(2, 1)
+
+        if not self.use_cpu:
+            x = x.cuda()
         x = x.float()
         batch_size = x.size(0)
         x = get_graph_feature(x, k=self.k)      # (batch_size, 3, num_points) -> (batch_size, 3*2, num_points, k)

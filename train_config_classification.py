@@ -110,21 +110,20 @@ class Trainer:
 
         for j, (data, target) in tqdm(enumerate(self.validationDataLoader), total=len(self.validationDataLoader)):
         # for j, (data, target) in enumerate(self.validationDataLoader):
-            points = data[MultiClothesDataLoader.Modalities.POINT_CLOUD]
-            if not self.config_dict['use_cpu']:
-                points, target = points.cuda(), target.cuda()
 
-            points = points.transpose(2, 1)
-            pred, _ = classifier(points)
+            if not self.config_dict['use_cpu']:
+                target.cuda()
+            pred, _ = classifier(data)
             pred_choice = pred.data.max(1)[1]
+            bs = len(data[list(data.keys())[0]])  # get batch size of the individual batch (in case it is the last one)
 
             for cat in np.unique(target.cpu()):
                 classacc = pred_choice[target == cat].eq(target[target == cat].long().data).cpu().sum()
-                class_acc[cat, 0] += classacc.item() / float(points[target == cat].size()[0])
+                class_acc[cat, 0] += classacc.item() / float(data[list(data.keys())[0]][target == cat].size()[0])
                 class_acc[cat, 1] += 1
 
             correct = pred_choice.eq(target.long().data).cpu().sum()
-            mean_correct.append(correct.item() / float(points.size()[0]))
+            mean_correct.append(correct.item() / float(bs))
 
         class_acc[:, 2] = class_acc[:, 0] / class_acc[:, 1]
         class_acc = np.mean(class_acc[:, 2])
@@ -250,25 +249,18 @@ class Trainer:
             for batch_id, (data, target) in tqdm(enumerate(self.trainDataLoader, 0), total=len(self.trainDataLoader), smoothing=0.9):
             # for batch_id, (data, target) in enumerate(self.trainDataLoader, 0):
                 optimizer.zero_grad()
-                if MultiClothesDataLoader.Modalities.POINT_CLOUD in data:
-                    points = data[MultiClothesDataLoader.Modalities.POINT_CLOUD]
-                    # points = provider.random_point_dropout(points)
-                    points[:, :, 0:3] = provider.random_scale_point_cloud(points[:, :, 0:3])
-                    points[:, :, 0:3] = provider.shift_point_cloud(points[:, :, 0:3])
+                data: dict
 
-                    points = points.transpose(2, 1)
+                if not self.config_dict['use_cpu']:
+                    target.cuda()
 
-                    if not self.config_dict['use_cpu']:
-                        # points = points.cuda()
-                        # target = target.cuda()
-                        points, target = points.cuda(), target.cuda()
-
-                pred, trans_feat = classifier(points)
+                pred, trans_feat = classifier(data)
                 loss = criterion(pred, target.long(), trans_feat)
                 pred_choice = pred.data.max(1)[1]
+                bs = len(data[list(data.keys())[0]])  # get batch size of the individual batch (in case it is the last one)
 
                 correct = pred_choice.eq(target.long().data).cpu().sum()
-                mean_correct.append(correct.item() / float(points.size()[0]))
+                mean_correct.append(correct.item() / float(bs))
                 loss.backward()
                 optimizer.step()
                 global_step += 1
