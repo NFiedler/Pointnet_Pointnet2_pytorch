@@ -9,6 +9,7 @@ tqdm
 pandas
 open3d
 opencv-python
+torchvision
 
 Pillow
 matplotlib

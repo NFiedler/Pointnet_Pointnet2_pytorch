@@ -112,7 +112,7 @@ class Trainer:
         # for j, (data, target) in enumerate(self.validationDataLoader):
 
             if not self.config_dict['use_cpu']:
-                target.cuda()
+                target = target.cuda()
             pred, _ = classifier(data)
             pred_choice = pred.data.max(1)[1]
             bs = len(data[list(data.keys())[0]])  # get batch size of the individual batch (in case it is the last one)
@@ -252,7 +252,7 @@ class Trainer:
                 data: dict
 
                 if not self.config_dict['use_cpu']:
-                    target.cuda()
+                    target = target.cuda()
 
                 pred, trans_feat = classifier(data)
                 loss = criterion(pred, target.long(), trans_feat)
