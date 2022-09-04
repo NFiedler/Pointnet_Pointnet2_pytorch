@@ -95,9 +95,12 @@ class MultiClothesDataLoader(Dataset):
         self.all_classes = list()
 
         self.modality_keys = {
-            MultiClothesDataLoader.Modalities.RGB: '_rgb.png',
-            MultiClothesDataLoader.Modalities.DEPTH: '_depth.png',
-            MultiClothesDataLoader.Modalities.POINT_CLOUD: '_pc.pcd',
+            MultiClothesDataLoader.Modalities.RGB: '_rgb_s.png',
+            MultiClothesDataLoader.Modalities.DEPTH: '_depth_s.npz',
+            MultiClothesDataLoader.Modalities.POINT_CLOUD: '_pc_s.npy',
+            # MultiClothesDataLoader.Modalities.RGB: '_rgb.png',
+            # MultiClothesDataLoader.Modalities.DEPTH: '_depth.png',
+            # MultiClothesDataLoader.Modalities.POINT_CLOUD: '_pc.pcd',
             MultiClothesDataLoader.Modalities.TACTILE: ('_finger_2.png', '_finger_3.png'),
         }
 
@@ -197,20 +200,39 @@ class MultiClothesDataLoader(Dataset):
         if MultiClothesDataLoader.Modalities.RGB in self.modalities:
             sample[MultiClothesDataLoader.Modalities.RGB] = cv2.imread(base + self.modality_keys[MultiClothesDataLoader.Modalities.RGB])
         if MultiClothesDataLoader.Modalities.DEPTH in self.modalities:
-            sample[MultiClothesDataLoader.Modalities.DEPTH] = np.array(PIL.Image.open(base + self.modality_keys[MultiClothesDataLoader.Modalities.DEPTH]))
+            if self.modality_keys[MultiClothesDataLoader.Modalities.DEPTH].endswith('png'):
+                sample[MultiClothesDataLoader.Modalities.DEPTH] = np.array(PIL.Image.open(base + self.modality_keys[MultiClothesDataLoader.Modalities.DEPTH]))
+            elif self.modality_keys[MultiClothesDataLoader.Modalities.DEPTH].endswith('npz'):
+                sample[MultiClothesDataLoader.Modalities.DEPTH] = np.load(base + self.modality_keys[MultiClothesDataLoader.Modalities.DEPTH])['depth']
+            else:
+                print('error with pointcloud file name')
         if MultiClothesDataLoader.Modalities.POINT_CLOUD in self.modalities:
-            o3d_cloud: o3d.geometry.PointCloud = o3d.io.read_point_cloud(
-                base + self.modality_keys[MultiClothesDataLoader.Modalities.POINT_CLOUD],
-                remove_nan_points=True,
-                remove_infinite_points=True
-            )
-            if self.point_cloud_numpy:
-                np_cloud = np.asarray(o3d_cloud.points)
-                if self.point_cloud_numpy_color:
-                    np_cloud = np.concatenate((np_cloud, np.asarray(o3d_cloud.colors)), axis=1)
+            if self.modality_keys[MultiClothesDataLoader.Modalities.POINT_CLOUD].endswith('pcd'):
+                o3d_cloud: o3d.geometry.PointCloud = o3d.io.read_point_cloud(
+                    base + self.modality_keys[MultiClothesDataLoader.Modalities.POINT_CLOUD],
+                    remove_nan_points=True,
+                    remove_infinite_points=True
+                )
+                if self.point_cloud_numpy:
+                    np_cloud = np.asarray(o3d_cloud.points)
+                    if self.point_cloud_numpy_color:
+                        np_cloud = np.concatenate((np_cloud, np.asarray(o3d_cloud.colors)), axis=1)
+                    np.random.shuffle(np_cloud)
+                    np_cloud = np_cloud[:self.point_cloud_num_points]
+                    sample[MultiClothesDataLoader.Modalities.POINT_CLOUD] = np_cloud
+                else:
+                    sample[MultiClothesDataLoader.Modalities.POINT_CLOUD] = o3d_cloud
+                    if self.point_cloud_num_points:
+                        raise NotImplementedError('point number not implemented for open3d point clouds.')
+            elif self.modality_keys[MultiClothesDataLoader.Modalities.POINT_CLOUD].endswith('npy'):
+                np_cloud = np.load(base + self.modality_keys[MultiClothesDataLoader.Modalities.POINT_CLOUD])
+                if not self.point_cloud_numpy_color:
+                    np_cloud = np_cloud[:, :3]
+                np.random.shuffle(np_cloud)
+                np_cloud = np_cloud[:self.point_cloud_num_points]
                 sample[MultiClothesDataLoader.Modalities.POINT_CLOUD] = np_cloud
             else:
-                sample[MultiClothesDataLoader.Modalities.POINT_CLOUD] = o3d_cloud
+                print('error with pointcloud file name')
         return sample, label
 
     def __getitem__(self, index):
