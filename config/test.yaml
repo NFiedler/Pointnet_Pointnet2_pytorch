@@ -3,6 +3,8 @@ use_cpu: True
 gpu: 0  # specify gpu device
 data_loader_workers: 10
 
+small_data: False
+dataset_portion: 1.0
 validation_split: 0.2
 batch_size: 24  # batch size in training
 epoch: 200  # number of epoch in training
