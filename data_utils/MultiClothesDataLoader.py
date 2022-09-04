@@ -68,6 +68,7 @@ class MultiClothesDataLoader(Dataset):
                  samples: Tuple[Union[int, str]],
                  areas: Tuple[Union[int, str]] = (1, 2, 3),
                  modalities: Union[Tuple[Modalities], List[Modalities]] = (Modalities.RGB, Modalities.POINT_CLOUD),
+                 small_data: bool = True,
                  sample_mappings: Optional[Dict[Union[int, str], int]] = None,
                  class_mappings: Optional[Dict[Union[int, str], int]] = None,
                  point_cloud_centered: bool = False,
@@ -82,6 +83,7 @@ class MultiClothesDataLoader(Dataset):
         self.root = root
         self.samples = samples
         self.modalities = modalities
+        self.small_data = small_data
         self.sample_mappings = sample_mappings
         self.class_mappings = class_mappings
         self.point_cloud_centered = point_cloud_centered
@@ -94,15 +96,21 @@ class MultiClothesDataLoader(Dataset):
         self.depth_crop = depth_crop
         self.all_classes = list()
 
-        self.modality_keys = {
-            MultiClothesDataLoader.Modalities.RGB: '_rgb_s.png',
-            MultiClothesDataLoader.Modalities.DEPTH: '_depth_s.npz',
-            MultiClothesDataLoader.Modalities.POINT_CLOUD: '_pc_s.npy',
-            # MultiClothesDataLoader.Modalities.RGB: '_rgb.png',
-            # MultiClothesDataLoader.Modalities.DEPTH: '_depth.png',
-            # MultiClothesDataLoader.Modalities.POINT_CLOUD: '_pc.pcd',
-            MultiClothesDataLoader.Modalities.TACTILE: ('_finger_2.png', '_finger_3.png'),
-        }
+        if self.small_data:
+            self.modality_keys = {
+                MultiClothesDataLoader.Modalities.RGB: '_rgb_s.png',
+                MultiClothesDataLoader.Modalities.DEPTH: '_depth_s.npz',
+                MultiClothesDataLoader.Modalities.POINT_CLOUD: '_pc_s.npy',
+                MultiClothesDataLoader.Modalities.TACTILE: ('_finger_2.png', '_finger_3.png'),
+            }
+        else:
+            self.modality_keys = {
+                MultiClothesDataLoader.Modalities.RGB: '_rgb.png',
+                MultiClothesDataLoader.Modalities.DEPTH: '_depth.png',
+                MultiClothesDataLoader.Modalities.POINT_CLOUD: '_pc.pcd',
+                MultiClothesDataLoader.Modalities.TACTILE: ('_finger_2.png', '_finger_3.png'),
+            }
+
 
         sample = {
             'rbg_img': None,

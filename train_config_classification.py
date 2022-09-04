@@ -90,6 +90,7 @@ class Trainer:
             samples=self.config_dict['samples'],
             sample_mappings=self.config_dict['sample_mappings'],
             modalities=modalities,
+            small_data=self.config_dict['small_data'],
             point_cloud_num_points=self.config_dict['num_points'],
         )
 
