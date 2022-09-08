@@ -146,8 +146,8 @@ class DGCNN(nn.Module):
         x = self.dp1(x)
         x = F.leaky_relu(self.bn7(self.linear2(x)), negative_slope=0.2)  # (batch_size, 512) -> (batch_size, 256)
         x = self.dp2(x)
-        x = self.linear3(x)                                             # (batch_size, 256) -> (batch_size, output_channels)
-        # TODO: Softmax?
+        x = self.linear3(x)
+        x = F.log_softmax(x, dim=1)                                        # (batch_size, 256) -> (batch_size, output_channels)
         return x, None
 
 
