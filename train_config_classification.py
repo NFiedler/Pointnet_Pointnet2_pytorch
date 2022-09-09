@@ -343,6 +343,39 @@ if __name__ == '__main__':
 
         result.to_pickle("results_d/results.pkl")
         result.to_csv("results_d/results.csv")
+    elif '-op' in sys.argv:
+        # with optuna
+        import optuna
+        # study = optuna.create_study(direction='maximize')
+        study = optuna.load_study(study_name="pointnet1", storage="postgresql://15fiedler:uMLtzMNz5EFzyMlQ5Y4EYV0y@rzrobo3/optuna_studies")
+        study.optimize(t.train_pointnet_optuna, timeout=24*60*60)
+        pruned_trials = study.get_trials(deepcopy=False, states=[optuna.trial.TrialState.PRUNED])
+        complete_trials = study.get_trials(deepcopy=False, states=[optuna.trial.TrialState.COMPLETE])
+
+        print("Study statistics: ")
+        print("  Number of finished trials: ", len(study.trials))
+        print("  Number of pruned trials: ", len(pruned_trials))
+        print("  Number of complete trials: ", len(complete_trials))
+
+        print("Best trial:")
+        trial = study.best_trial
+
+        print("  Value: ", trial.value)
+
+        print("  Params: ")
+        for key, value in trial.params.items():
+            print("    {}: {}".format(key, value))
+
+        result = study.trials_dataframe()
+        fig = optuna.visualization.plot_param_importances(study)
+        os.makedirs('results_p/images', exist_ok=True)
+        fig.write_image("results_p/images/importance.png")
+        fig = optuna.visualization.plot_optimization_history(study)
+        fig.write_image("results_p/images/history.png")
+
+
+        result.to_pickle("results_p/results.pkl")
+        result.to_csv("results_p/results.csv")
 
     else:
         # without optuna
