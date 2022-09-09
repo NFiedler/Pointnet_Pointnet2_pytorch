@@ -109,9 +109,10 @@ class DGCNN(nn.Module):
 
     def forward(self, x):
         x = x[MultiClothesDataLoader.Modalities.POINT_CLOUD]
-        # points = provider.random_point_dropout(points)
-        x[:, :, 0:3] = provider.random_scale_point_cloud(x[:, :, 0:3])
-        x[:, :, 0:3] = provider.shift_point_cloud(x[:, :, 0:3])
+        if self.training:
+            # points = provider.random_point_dropout(points)
+            x[:, :, 0:3] = provider.random_scale_point_cloud(x[:, :, 0:3])
+            x[:, :, 0:3] = provider.shift_point_cloud(x[:, :, 0:3])
 
         x = x.transpose(2, 1)
 
